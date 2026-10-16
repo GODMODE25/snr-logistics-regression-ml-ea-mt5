@@ -1,0 +1,39 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "XAUUSD S&R Logistic Regression",
+      "hasCanvas": true,
+      "bodyTextLen": 3984,
+      "bodyTextHash": "6de1ec17682fd1d3d64a5c2260b59c599462d3b9a319e9edb75e41af95257ec5",
+      "bodyTextPrefix": "METATRADER 5 EXPERT ADVISOR XAUUSD support and resistance Closed",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "XAUUSD S&R Logistic Regression",
+      "hasCanvas": true,
+      "bodyTextLen": 3984,
+      "bodyTextHash": "6de1ec17682fd1d3d64a5c2260b59c599462d3b9a319e9edb75e41af95257ec5",
+      "bodyTextPrefix": "METATRADER 5 EXPERT ADVISOR XAUUSD support and resistance Closed",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [
+    "BRAND WARNING: this looks like a game/canvas app but src/lib/og/site.json is missing \"type\": \"x:game\". X uses og:type=x:game to present the unfurl as a game card — set it in /workspace/src/lib/og/site.json per /workspace/.grok/skills/og/SKILL.md. Do not invent x:type or overload twitter:card as the game signal.",
+    "BRAND WARNING: this looks like a game/canvas app but /workspace/public/x-banner.jpg is missing. Games need a 50:11 X feed card (1200×264 JPEG) at public/x-banner.jpg — open /workspace/.grok/skills/og/SKILL.md and finish the brand-asset pass."
+  ],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}

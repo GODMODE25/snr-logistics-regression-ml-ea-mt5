@@ -1,0 +1,203 @@
+XAUUSD SR LOGISTIC REGRESSION — STRATEGY TESTER PLAN
+================================================
+EA file: XAUUSD_SR_LogReg_EA.mq5
+Symbol:  XAUUSD (or your broker's XAUUSD / GOLD symbol)
+This file is the test protocol. It is not a performance claim.
+The preview chart is a synthetic teaching model. It is not broker history.
+
+WHAT HAS TO BE TRUE BEFORE YOU CALL IT A SUCCESS
+-------------------------------------------------
+Report the out-of-sample block only. Ignore the best optimized curve.
+A credible result needs all of the following:
+
+1. Positive net expectancy after commission, spread, and swap.
+2. Enough trades to mean something. Target at least 1,000 closed trades
+   across the whole test, more if the symbol history allows it.
+3. M5 and M15 tell a similar story, or you can say exactly why they do not
+   (session noise, spread versus target, level age).
+4. The edge is not one year or one regime. Read the equity shape. If you
+   delete the best year and the expectancy dies, it is not robust.
+5. The ML preset beats the pivot-only baseline on the out-of-sample slice.
+   If it does not, keep preset A or discard the strategy. Do not add
+   parameters until it looks good.
+
+The EA prints this split at the end of the test and writes the same text
+to MQL5/Files/XAUUSD_SR_LogReg_summary.txt. Trade rows go to
+MQL5/Files/XAUUSD_SR_LogReg_trades.csv.
+
+In the Strategy Tester the Files folder is under the agent directory:
+  <data folder>/Tester/Agent-*/MQL5/Files/
+The journal line "CSV written" prints the full path.
+
+INSTALL
+-------
+1. MetaTrader 5 → File → Open Data Folder → MQL5 → Experts.
+2. Copy XAUUSD_SR_LogReg_EA.mq5 into that folder.
+3. Open it in MetaEditor and compile (F7). Fix nothing unless your build
+   is older than the trade library; this EA uses only standard MQL5.
+4. Enable algorithmic trading.
+5. Open XAUUSD. Download history for M5 and M15 (Tools → History Center,
+   or scroll the chart back) before testing.
+
+WHAT THE JOURNAL MUST SHOW ON INIT
+-----------------------------------
+- "Logistic self-check passed" with p(y=1|x=+1) high and p(y=1|x=-1) low.
+  If that line fails, do not trust the run. The trainer is broken.
+- The preset name and timeframe.
+- Current spread, slippage cap, and the symbol's swap long/short.
+- The train and validation cut times, once split dates are set.
+
+FOUR CONFIGURATIONS — RUN THEM SEPARATELY
+------------------------------------------
+Do not change anything except the preset and the timeframe between the
+four runs of a given pass. Use the same dates, deposit, commission,
+spread model, and slippage.
+
+  A  Pivot-only retest baseline
+  B  ML-approved retests          (default preset)
+  C  Break strategy
+  D  ML-approved breaks
+
+Preset "Custom" is for later, not for the comparison.
+
+Recommended research inputs (signal comparison, not a live brake):
+  Pivot length              14
+  Target respects           3
+  Retest cooldown           3
+  Max level age             500
+  Touch ATR mult            0.25
+  Probability threshold     0.55
+  Learning rate             0.03
+  L2 lambda                 0.001
+  Epochs                    1
+  Norm window               200
+  Min train samples         30
+  Balance classes           true
+  Train policy              Fit on the earliest 60% only, then freeze
+  Fallback to baseline      false
+  Fixed lot                 0.01
+  Risk percent              off
+  Max daily loss percent    0     (off, so the daily stop does not bias A vs B)
+  SL ATR mult               1.5
+  Risk-reward mode          off
+  TP ATR mult               3.0
+  Trailing                  off
+  Max trade bars            0
+  Max spread points         0     (let the tester's spread do the work)
+  Slippage points           50    (must be >= the tester slippage below)
+  Magic                     26041301
+
+For a second, live-like pass after a configuration survives OOS:
+  Max daily loss percent    3
+  Risk percent              0.5 to 1.0, fixed lot off
+  Max spread points         your broker's bad-spread cutoff
+Leave trailing and the time stop off until the plain version has a result.
+
+CHRONOLOGICAL SPLIT
+--------------------
+Never optimize on the final 20%.
+
+1. In the tester, note From and To. Use the full downloaded XAUUSD history.
+   Write the exact From, To, and bar count into your notes from the EA
+   summary ("Processed <first> -> <last>" and "Closed bars").
+2. Set the EA inputs:
+     Split window start = the tester From date
+     Split window end   = the tester To date
+   The EA cuts that window itself:
+     Train        earliest 60%   weights may update
+     Validation   next 20%       weights frozen, OnTester returns this PF
+     Out-of-sample final 20%     weights frozen, this is the only score that counts
+3. If either split date is 0, the EA tags every trade UNSPLIT, warns you,
+   and (in freeze mode) keeps training online. That run is not a walk-forward.
+
+OnTester() returns validation profit factor only, and only if validation
+has at least 30 trades. It returns 0 otherwise. Do not optimize on the
+out-of-sample dates. If you optimize at all, set the tester To date to the
+validation end printed on a previous full-window run, then lock the inputs
+and run the untouched final 20% once.
+
+PASS 1 — DEBUG (1 MINUTE OHLC)
+------------------------------
+Run this first. Entries are decided at the new bar, so gross signal logic
+should be stable here. Stops still fill inside the bar, so treat the money
+numbers as provisional.
+
+  Expert:        XAUUSD_SR_LogReg_EA
+  Symbol:        XAUUSD
+  Timeframe:     M5, then repeat the four presets on M15
+  Date:          full downloaded history
+  Forward:       No
+  Delays:        zero latency is acceptable on this debug pass
+  Modelling:     1 minute OHLC
+  Deposit:       10000, leverage matching the account you would actually use
+  Optimization:  disabled
+  Visual mode:   off
+
+Costs on this pass (do not leave them at zero):
+  Commission:    your broker's real XAUUSD commission.
+                 If you do not know it, use a stated assumption such as
+                 7 USD per 1.00 lot per side and write that assumption down.
+  Spread:        fixed, a realistic average for that broker and session
+                 (often wider than the raw minimum). Real-tick pass below
+                 replaces this.
+  Swap:          use the symbol defaults. The EA does not zero swap.
+                 Overnight trades must keep their swap in the net.
+  Slippage:      20 to 30 points in the tester.
+                 EA "Slippage points" must be at least that value or orders
+                 that slip past the deviation are cancelled. Default is 50.
+
+Do this for A, B, C, D on M5, then A, B, C, D on M15. Eight runs.
+Read the journal summary. Discard a preset only after you have seen its
+out-of-sample block, not after a bad train block.
+
+If a run throws "order failed" / invalid stops on almost every signal,
+the broker stop level is larger than the SL distance. Raise SL ATR mult
+only in a new research pass, and say so. Do not silently keep the run
+that never traded.
+
+PASS 2 — FINAL VALIDATION (REAL TICKS)
+---------------------------------------
+Take only the presets that still have a positive out-of-sample expectancy
+on the OHLC pass, plus preset A as the baseline even if you already know
+its number. Re-run those on:
+
+  Modelling:     Every tick based on real ticks
+  Timeframe:     the same M5 or M15, separately
+  Costs:         same commission; spread comes from the ticks
+                 (do not also force a wide fixed spread on top)
+  Slippage:      small extra slippage if you want to be harsh (10 points),
+                 with EA deviation still at 50
+  Visual mode:   off for the statistic, on for one short sample if you
+                 want to see levels
+
+Real-tick fills change stop and target hits inside the bar. If OOS
+expectancy flips negative here, the OHLC result does not count.
+
+Report, for each surviving configuration and each timeframe:
+  exact processed date range
+  closed-bar count
+  train / validation / out-of-sample trade counts
+  out-of-sample: trades, win rate, profit factor, expectancy, max drawdown,
+                 average win, average loss, average duration, long/short split
+  ML-approved trade count versus baseline trade count
+  whether OOS expectancy stayed positive after commission, swap, and spread
+  whether ML beat preset A on that same OOS window
+
+DRAWINGS
+--------
+Show chart drawings defaults to true.
+Objects are created only on a live/demo chart or in visual tester mode.
+A non-visual backtest creates none. Turning drawings off must not change
+fills; the drawing code does not feed the signal.
+
+Object names start with XAU_SR_LOGREG_.
+On remove, OnDeinit deletes every object with that prefix.
+
+WHAT NOT TO DO
+--------------
+- Do not optimize the final 20%.
+- Do not turn Fallback-to-baseline on and then call the result an ML test.
+- Do not mix A and B by flipping Custom toggles mid-window.
+- Do not quote the synthetic preview numbers as XAUUSD results.
+- Do not add a filter because one year was ugly. That is a new strategy
+  and it starts this protocol over.
